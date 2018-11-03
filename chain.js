@@ -4,7 +4,7 @@
  */
 const { tuple } = require('immutable-tuple')
 
-const { last, bisect } = require('./util')
+const { pick } = require('./util')
 
 /**
  * Token to represent the start of runs.
@@ -116,13 +116,7 @@ class Chain {
     const choices = [...stateArr[0].keys()]
     const weights = [...stateArr[0].values()]
 
-    const distAcc = weights.reduce((accW, curW) => {
-      const sum = last(accW) || 0
-      return [...accW, (sum + curW)]
-    }, [])
-
-    const r = Math.random() * last(distAcc)
-    const randomIndex = bisect(distAcc, r)
+    const randomIndex = pick(weights)
 
     return choices[randomIndex]
   }
@@ -144,13 +138,7 @@ class Chain {
     const choices = [...stateArr[1].keys()]
     const weights = [...stateArr[1].values()]
 
-    const distAcc = weights.reduce((accW, curW) => {
-      const sum = last(accW) || 0
-      return [...accW, (sum + curW)]
-    }, [])
-
-    const r = Math.random() * last(distAcc)
-    const randomIndex = bisect(distAcc, r)
+    const randomIndex = pick(weights)
 
     return choices[randomIndex]
   }
