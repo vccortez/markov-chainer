@@ -28,10 +28,10 @@ class Chain {
   /**
    * Creates an instance of Chain.
    *
-   * @param {any[][]} corpus - a list of actual runs
-   * @param {object} [options] - options object
-   * @param {number} [options.stateSize=1] - size of state nodes
-   * @param {Map} [options.model] - a prebuilt model
+   * @param {any[][]} corpus - A list of actual runs
+   * @param {object} [opt] - Options object
+   * @param {number} [opt.stateSize=1] - Size of state nodes
+   * @param {Map} [opt.model] - A prebuilt model
    * @memberof Chain
    */
   constructor (corpus, { stateSize = 1, model } = {}) {
@@ -41,7 +41,7 @@ class Chain {
   }
 
   /**
-   * Initial state of BEGIN tokens.
+   * Initial state with BEGIN tokens.
    *
    * @readonly
    * @memberof Chain
@@ -51,10 +51,10 @@ class Chain {
   }
 
   /**
-   * Builds the markov chain model.
+   * Builds the Markov chain model.
    *
-   * @param {any[][]} corpus - corpus used to build the chain
-   * @returns {Map} markov model
+   * @param {any[][]} corpus - Corpus used to build the chain
+   * @returns {Map} Markov model
    * @memberof Chain
    */
   build (corpus) {
@@ -72,10 +72,10 @@ class Chain {
    * Updates model from a single run.
    *
    * @param {any[]} run
-   * @param {object} [options=this] - options object
-   * @param {Map} [options.model] - model to update
-   * @param {tuple} [options.initialState] - starting tuple
-   * @param {number} [options.stateSize] - size of state nodes
+   * @param {object} [options=this] - Options object
+   * @param {Map} [options.model] - Model to update
+   * @param {tuple} [options.initialState] - Starting tuple
+   * @param {number} [options.stateSize] - Size of state nodes
    * @memberof Chain
    */
   seed (run, { model, initialState, stateSize } = this) {
@@ -102,8 +102,8 @@ class Chain {
   /**
    * Randomly chooses the next step from a given state.
    *
-   * @param {tuple} fromState - the state to move from
-   * @returns {any} possible next step on the chain
+   * @param {tuple} fromState - The state to move from
+   * @returns {any} Possible next step on the chain
    * @memberof Chain
    */
   stepAhead (fromState) {
@@ -113,8 +113,8 @@ class Chain {
   /**
    * Randomly chooses the previous step from a given state.
    *
-   * @param {tuple} fromState - the state to move from
-   * @returns {any} possible previous step on the chain
+   * @param {tuple} fromState - The state to move from
+   * @returns {any} Possible previous step on the chain
    * @memberof Chain
    */
   stepBack (fromState) {
@@ -125,9 +125,9 @@ class Chain {
    * Randomly chooses a new step from a given state.
    *
    * @private
-   * @param {tuple} fromState - the state to move from
-   * @param {boolean} [forward] - movement direction
-   * @returns {any} a possible next step of the chain
+   * @param {tuple} fromState - The state to move from
+   * @param {boolean} [forward] - Movement direction
+   * @returns {any} A possible next step of the chain
    * @memberof Chain
    */
   _step (fromState, forward = true) {
@@ -150,35 +150,35 @@ class Chain {
   /**
    * Generates successive states until the chain reaches an END.
    *
-   * @param {any[]} [fromState] - begin state of the chain walk
-   * @yield {any} a new succeding state of the chain
+   * @param {any[]} [fromState] - Begin state of the chain walk
+   * @yield {any} A new succeding state of the chain
    * @memberof Chain
    */
-  *walkForward (fromState) {
-    yield* this._walk(fromState)
+  * walkForward (fromState) {
+    yield * this._walk(fromState)
   }
 
   /**
    * Generates successive states until the chain reaches a BEGIN.
    *
-   * @param {any[]} fromState - starting state of the chain walk
-   * @yield {any} a new preceeding state of the chain
+   * @param {any[]} fromState - Starting state of the chain walk
+   * @yield {any} A new preceeding state of the chain
    * @memberof Chain
    */
-  *walkBackward (fromState) {
-    yield* this._walk(fromState, false)
+  * walkBackward (fromState) {
+    yield * this._walk(fromState, false)
   }
 
   /**
    * Generates successive states until it finds a stop token.
    *
    * @private
-   * @param {any[]} fromState - initial state
-   * @param {boolean} [forward] - movement direction
-   * @yield {any} a new state of the chain
+   * @param {any[]} fromState - Initial state
+   * @param {boolean} [forward] - Movement direction
+   * @yield {any} A new state of the chain
    * @memberof Chain
    */
-  *_walk (fromState, forward = true) {
+  * _walk (fromState, forward = true) {
     const stopToken = forward ? END : BEGIN
     let state = fromState || this.initialState
 
@@ -197,6 +197,42 @@ class Chain {
         state = tuple(step, ...state.slice(0, state.length - 1))
       }
     }
+  }
+
+  /**
+   * Walks the Markov chain and returns all steps.
+   *
+   * @param {object} [opt] - Options object
+   * @param {any[]} [opt.fromState=[]] - Starting state
+   * @param {boolean} [opt.backSearch=true] - Should walk back
+   * @returns {any[][]} Array with back root and forward steps
+   * @memberof Chain
+   */
+  run ({ fromState = [], backSearch = true } = {}) {
+    const root = fromState.slice(0, this.stateSize)
+    const startState = [...root]
+
+    while (startState.length < this.stateSize) {
+      startState.unshift(BEGIN)
+    }
+
+    const stepsForward = [...this.walkForward(tuple(...startState))]
+
+    if (!backSearch || root.length < this.stateSize) {
+      return [
+        [],
+        stepsForward.length > 0 ? root : [],
+        stepsForward
+      ]
+    }
+
+    const stepsBack = [...this.walkBackward(tuple(...root))].reverse()
+
+    return [
+      stepsBack,
+      stepsForward.length > 0 || stepsBack.length > 0 ? root : [],
+      stepsForward
+    ]
   }
 
   /**
@@ -239,8 +275,8 @@ class Chain {
    * Creates a Chain from a JSON string.
    *
    * @static
-   * @param {string} jsonChain - a Chain serialised with {Chain.toJSON}
-   * @returns {Chain} a new Chain instance
+   * @param {string} jsonChain - A chain serialised with {Chain.toJSON}
+   * @returns {Chain} A new chain instance
    * @memberof Chain
    */
   static fromJSON (jsonChain) {
@@ -283,7 +319,6 @@ class Chain {
 
     return new Chain(null, { stateSize, model: new Map(states) })
   }
-
 }
 
 module.exports = { Chain }
