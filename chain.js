@@ -107,18 +107,7 @@ class Chain {
    * @memberof Chain
    */
   stepAhead (fromState) {
-    const stateArr = this.model.get(fromState)
-
-    if (!stateArr) {
-      return END
-    }
-
-    const choices = [...stateArr[0].keys()]
-    const weights = [...stateArr[0].values()]
-
-    const randomIndex = pick(weights)
-
-    return choices[randomIndex]
+    return this._step(fromState)
   }
 
   /**
@@ -129,14 +118,29 @@ class Chain {
    * @memberof Chain
    */
   stepBack (fromState) {
+    return this._step(fromState, false)
+  }
+
+  /**
+   * Randomly chooses a new step from a given state.
+   *
+   * @private
+   * @param {tuple} fromState - the state to move from
+   * @param {boolean} [forward] - movement direction
+   * @returns {any} a possible next step of the chain
+   * @memberof Chain
+   */
+  _step (fromState, forward = true) {
+    const index = forward ? 0 : 1
+    const failToken = forward ? END : BEGIN
     const stateArr = this.model.get(fromState)
 
     if (!stateArr) {
-      return BEGIN
+      return failToken
     }
 
-    const choices = [...stateArr[1].keys()]
-    const weights = [...stateArr[1].values()]
+    const choices = [...stateArr[index].keys()]
+    const weights = [...stateArr[index].values()]
 
     const randomIndex = pick(weights)
 
@@ -151,19 +155,7 @@ class Chain {
    * @memberof Chain
    */
   *walkForward (fromState) {
-    let state = fromState || this.initialState
-
-    while (true) {
-      const step = this.stepAhead(state)
-
-      if (step === END) {
-        break
-      }
-
-      yield step
-
-      state = tuple(...state.slice(1), step)
-    }
+    yield* this._walk(fromState)
   }
 
   /**
@@ -174,18 +166,36 @@ class Chain {
    * @memberof Chain
    */
   *walkBackward (fromState) {
+    yield* this._walk(fromState, false)
+  }
+
+  /**
+   * Generates successive states until it finds a stop token.
+   *
+   * @private
+   * @param {any[]} fromState - initial state
+   * @param {boolean} [forward] - movement direction
+   * @yield {any} a new state of the chain
+   * @memberof Chain
+   */
+  *_walk (fromState, forward = true) {
+    const stopToken = forward ? END : BEGIN
     let state = fromState || this.initialState
 
     while (true) {
-      const step = this.stepBack(state)
+      const step = this._step(state, forward)
 
-      if (step === BEGIN) {
+      if (step === stopToken) {
         break
       }
 
       yield step
 
-      state = tuple(step, ...state.slice(0, state.length - 1))
+      if (forward) {
+        state = tuple(...state.slice(1), step)
+      } else {
+        state = tuple(step, ...state.slice(0, state.length - 1))
+      }
     }
   }
 
@@ -276,4 +286,4 @@ class Chain {
 
 }
 
-module.exports = { Chain, BEGIN, END }
+module.exports = { Chain }

@@ -18,8 +18,7 @@ util.bisect = function bisect (a, x, lo = 0, hi = a.length) {
     const mid = Math.floor((lo + hi) / 2)
     if (x < a[mid]) {
       hi = mid
-    }
-    else {
+    } else {
       lo = mid + 1
     }
   }
