@@ -3,10 +3,16 @@
   "version": "1.0.0",
   "description": "a simple markov chain library",
   "main": "chain.js",
+  "scripts": {
+    "test": "jsdoc chain.js"
+  },
   "dependencies": {
     "immutable-tuple": "^0.4.9"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "jsdoc": "^3.5.5",
+    "standard": "^12.0.1"
+  },
   "author": "Vitor Cortez <vitor.a.cortez@gmail.com>",
   "license": "MIT"
 }
