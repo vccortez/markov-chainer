@@ -22,7 +22,6 @@ const END = Symbol('@@END')
 
 /**
  * A Markov chain.
- * @class Chain
  */
 class Chain {
   /**
@@ -32,7 +31,6 @@ class Chain {
    * @param {object} [opt] - Options object
    * @param {number} [opt.stateSize=1] - Size of state nodes
    * @param {Map} [opt.model] - A prebuilt model
-   * @memberof Chain
    */
   constructor (corpus, { stateSize = 1, model } = {}) {
     this.stateSize = stateSize
@@ -44,7 +42,7 @@ class Chain {
    * Initial state with BEGIN tokens.
    *
    * @readonly
-   * @memberof Chain
+   * @returns {tuple} Tuple of BEGIN tokens
    */
   get initialState () {
     return tuple(...new Array(this.stateSize).fill(BEGIN))
@@ -55,7 +53,6 @@ class Chain {
    *
    * @param {any[][]} corpus - Corpus used to build the chain
    * @returns {Map} Markov model
-   * @memberof Chain
    */
   build (corpus) {
     const model = new Map()
@@ -76,7 +73,6 @@ class Chain {
    * @param {Map} [options.model] - Model to update
    * @param {tuple} [options.initialState] - Starting tuple
    * @param {number} [options.stateSize] - Size of state nodes
-   * @memberof Chain
    */
   seed (run, { model, initialState, stateSize } = this) {
     const items = [...initialState, ...run, END]
@@ -104,7 +100,6 @@ class Chain {
    *
    * @param {tuple} fromState - The state to move from
    * @returns {any} Possible next step on the chain
-   * @memberof Chain
    */
   stepAhead (fromState) {
     return this._step(fromState)
@@ -115,7 +110,6 @@ class Chain {
    *
    * @param {tuple} fromState - The state to move from
    * @returns {any} Possible previous step on the chain
-   * @memberof Chain
    */
   stepBack (fromState) {
     return this._step(fromState, false)
@@ -128,7 +122,6 @@ class Chain {
    * @param {tuple} fromState - The state to move from
    * @param {boolean} [forward] - Movement direction
    * @returns {any} A possible next step of the chain
-   * @memberof Chain
    */
   _step (fromState, forward = true) {
     const index = forward ? 0 : 1
@@ -152,7 +145,6 @@ class Chain {
    *
    * @param {any[]} [fromState] - Begin state of the chain walk
    * @yield {any} A new succeding state of the chain
-   * @memberof Chain
    */
   * walkForward (fromState) {
     yield * this._walk(fromState)
@@ -163,7 +155,6 @@ class Chain {
    *
    * @param {any[]} fromState - Starting state of the chain walk
    * @yield {any} A new preceeding state of the chain
-   * @memberof Chain
    */
   * walkBackward (fromState) {
     yield * this._walk(fromState, false)
@@ -176,7 +167,6 @@ class Chain {
    * @param {any[]} fromState - Initial state
    * @param {boolean} [forward] - Movement direction
    * @yield {any} A new state of the chain
-   * @memberof Chain
    */
   * _walk (fromState, forward = true) {
     const stopToken = forward ? END : BEGIN
@@ -206,7 +196,6 @@ class Chain {
    * @param {any[]} [opt.fromState=[]] - Starting state
    * @param {boolean} [opt.backSearch=true] - Should walk back
    * @returns {any[][]} Array with back root and forward steps
-   * @memberof Chain
    */
   run ({ fromState = [], backSearch = true } = {}) {
     const root = fromState.slice(0, this.stateSize)
@@ -243,8 +232,7 @@ class Chain {
    *   [ [ [state], [ [next, count], ...], [ [prev, count], ...] ], ...]
    *
    * @returns {any[]} JSON array
-   * @memberof Chain
-   * @see [MDN]{https://mdn.io/stringify#toJSON()_behavior}
+   * @see https://mdn.io/stringify#toJSON()_behavior
    */
   toJSON () {
     const serialised = []
@@ -277,7 +265,6 @@ class Chain {
    * @static
    * @param {string} jsonChain - A chain serialised with {Chain.toJSON}
    * @returns {Chain} A new chain instance
-   * @memberof Chain
    */
   static fromJSON (jsonChain) {
     let stateSize
