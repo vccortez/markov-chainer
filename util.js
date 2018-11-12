@@ -40,3 +40,16 @@ util.pick = function pick (weights) {
   const randomIndex = util.bisect(distributionSum, r)
   return randomIndex
 }
+
+const privatesMap = new WeakMap()
+
+/**
+ * Returns an object for an instance.
+ *
+ * @param {any} instance
+ * @returns {object} instance variables
+ */
+util.internal = function internal (instance) {
+  if (!privatesMap.has(instance)) privatesMap.set(instance, {})
+  return privatesMap.get(instance)
+}

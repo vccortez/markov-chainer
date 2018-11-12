@@ -5,7 +5,7 @@
 
 const { tuple } = require('immutable-tuple')
 
-const { pick } = require('./util')
+const { pick, internal } = require('./util')
 
 /**
  * Token to represent the start of runs.
@@ -23,20 +23,25 @@ const END = Symbol('@@END')
 
 /**
  * A Markov chain.
+ * @class
  */
 class Chain {
   /**
    * Creates an instance of Chain.
    *
    * @param {any[][]} corpus - A list of actual runs
-   * @param {object} [opt] - Options object
+   * @param {object} [opt] - opt object
    * @param {number} [opt.stateSize=1] - Size of state nodes
    * @param {Map} [opt.model] - A prebuilt model
    */
   constructor (corpus, { stateSize = 1, model } = {}) {
-    this['_state-size'] = stateSize
-
-    this['_chain-model'] = model || this.build(corpus)
+    if (model) {
+      internal(this).model = model
+      internal(this).stateSize = model.keys().next().value.length
+    } else {
+      internal(this).stateSize = stateSize
+      internal(this).model = Chain.build(corpus, this)
+    }
   }
 
   /**
@@ -46,7 +51,7 @@ class Chain {
    * @type {number}
    */
   get stateSize () {
-    return this['_state-size']
+    return internal(this).stateSize
   }
 
   /**
@@ -56,7 +61,7 @@ class Chain {
    * @type {Map}
    */
   get model () {
-    return this['_chain-model']
+    return internal(this).model
   }
 
   /**
@@ -70,32 +75,36 @@ class Chain {
   }
 
   /**
-   * Builds the Markov chain model.
+   * Builds a Markov chain model.
    *
-   * @param {any[][]} corpus - Corpus used to build the chain
-   * @returns {Map} Markov model
+   * @static
+   * @param {any[][]} corpus - Corpus to build the model from
+   * @param {object} opt - Options object
+   * @param {tuple} opt.initialState - Begin state of chain
+   * @param {number} [opt.stateSize=opt.initialState.length] - Chain state size
+   * @returns {Map} Markov chain model
    */
-  build (corpus) {
-    const { initialState, stateSize } = this
+  static build (corpus, { initialState, stateSize = initialState.length } = {}) {
     const model = new Map()
 
     for (const run of corpus) {
-      this.seed(run, { model, initialState, stateSize })
+      Chain.seed(run, { model, initialState, stateSize })
     }
 
     return model
   }
 
   /**
-   * Updates model from a single run.
+   * Updates a model from a single run.
    *
-   * @param {any[]} run
-   * @param {object} [options=this] - Options object
-   * @param {Map} [options.model] - Model to update
-   * @param {tuple} [options.initialState] - Starting tuple
-   * @param {number} [options.stateSize] - Size of state nodes
+   * @static
+   * @param {any[]} run - Array of tokens
+   * @param {object} opt - Options object
+   * @param {Map} opt.model - Model to update
+   * @param {tuple} opt.initialState - Starting tuple
+   * @param {number} opt.stateSize - Size of state nodes
    */
-  seed (run, { model, initialState, stateSize } = this) {
+  static seed (run, { model, initialState, stateSize } = {}) {
     const items = [...initialState, ...run, END]
 
     for (let i = 0; i < run.length + 1; ++i) {
@@ -213,7 +222,7 @@ class Chain {
   /**
    * Walks the Markov chain and returns all steps.
    *
-   * @param {object} [opt] - Options object
+   * @param {object} [opt] - opt object
    * @param {any[]} [opt.fromState=[]] - Starting state
    * @param {boolean} [opt.backSearch=true] - Should walk back
    * @returns {any[][]} Array with back root and forward steps
