@@ -2,6 +2,7 @@
  * markov-chainer module.
  * @module markov-chainer
  */
+
 const { tuple } = require('immutable-tuple')
 
 const { pick } = require('./util')
@@ -33,16 +34,36 @@ class Chain {
    * @param {Map} [opt.model] - A prebuilt model
    */
   constructor (corpus, { stateSize = 1, model } = {}) {
-    this.stateSize = stateSize
+    this['_state-size'] = stateSize
 
-    this.model = model || this.build(corpus)
+    this['_chain-model'] = model || this.build(corpus)
+  }
+
+  /**
+   * Size of state nodes.
+   *
+   * @readonly
+   * @type {number}
+   */
+  get stateSize () {
+    return this['_state-size']
+  }
+
+  /**
+   * Map of chain states.
+   *
+   * @readonly
+   * @type {Map}
+   */
+  get model () {
+    return this['_chain-model']
   }
 
   /**
    * Initial state with BEGIN tokens.
    *
    * @readonly
-   * @returns {tuple} Tuple of BEGIN tokens
+   * @type {tuple}
    */
   get initialState () {
     return tuple(...new Array(this.stateSize).fill(BEGIN))
@@ -55,8 +76,8 @@ class Chain {
    * @returns {Map} Markov model
    */
   build (corpus) {
-    const model = new Map()
     const { initialState, stateSize } = this
+    const model = new Map()
 
     for (const run of corpus) {
       this.seed(run, { model, initialState, stateSize })
