@@ -32,21 +32,25 @@ class Chain {
    * @param {any[][]} corpus - A list of actual runs
    * @param {object} [opt] - opt object
    * @param {number} [opt.stateSize=1] - Size of state nodes
+   * @param {boolean} [opt.useTokenMap=true] - Should it map `token => state` ?
    * @param {Map} [opt.model] - A prebuilt model
    */
-  constructor (corpus, { stateSize = 1, model } = {}) {
+  constructor (corpus, { stateSize = 1, useTokenMap = true, model } = {}) {
     if (model) {
       internal(this).model = model
       internal(this).stateSize = model.keys().next().value.length
     } else {
       internal(this).stateSize = stateSize
-      internal(this).model = Chain.build(corpus, this)
+      internal(this).model = Chain.buildModel(corpus, this)
+    }
+
+    if (useTokenMap && this.stateSize > 1) {
+      internal(this).tokenMap = Chain.buildTokenMap(this.model)
     }
   }
 
   /**
    * Size of state nodes.
-   *
    * @readonly
    * @type {number}
    */
@@ -56,7 +60,6 @@ class Chain {
 
   /**
    * Map of chain states.
-   *
    * @readonly
    * @type {Map}
    */
@@ -66,12 +69,20 @@ class Chain {
 
   /**
    * Initial state with BEGIN tokens.
-   *
    * @readonly
    * @type {tuple}
    */
   get initialState () {
     return tuple(...new Array(this.stateSize).fill(BEGIN))
+  }
+
+  /**
+   * Map of token to state.
+   * @readonly
+   * @type {Map}
+   */
+  get tokenMap () {
+    return internal(this).tokenMap
   }
 
   /**
@@ -84,7 +95,7 @@ class Chain {
    * @param {number} [opt.stateSize=opt.initialState.length] - Chain state size
    * @returns {Map} Markov chain model
    */
-  static build (corpus, { initialState, stateSize = initialState.length } = {}) {
+  static buildModel (corpus, { initialState, stateSize = initialState.length } = {}) {
     const model = new Map()
 
     for (const run of corpus) {
@@ -92,6 +103,30 @@ class Chain {
     }
 
     return model
+  }
+
+  /**
+   * Builds a Map of token to states.
+   *
+   * @static
+   * @param {Map} model - Markov chain model
+   * @returns {Map} A token map
+   */
+  static buildTokenMap (model) {
+    const tokenMap = new Map()
+
+    for (const state of model.keys()) {
+      for (const token of state) {
+        if (!tokenMap.has(token)) {
+          tokenMap.set(token, new Set())
+        }
+
+        const entry = tokenMap.get(token)
+        entry.add(state)
+      }
+    }
+
+    return tokenMap
   }
 
   /**
@@ -103,8 +138,9 @@ class Chain {
    * @param {Map} opt.model - Model to update
    * @param {tuple} opt.initialState - Starting tuple
    * @param {number} opt.stateSize - Size of state nodes
+   * @param {tuple} [opt.tokenMap] - Optional map of `token => state`
    */
-  static seed (run, { model, initialState, stateSize } = {}) {
+  static seed (run, { model, tokenMap, initialState, stateSize } = {}) {
     const items = [...initialState, ...run, END]
 
     for (let i = 0; i < run.length + 1; ++i) {
@@ -122,6 +158,17 @@ class Chain {
 
       stateMaps[0].set(next, nextCount + 1)
       stateMaps[1].set(prev, prevCount + 1)
+
+      if (tokenMap) {
+        for (const token of state) {
+          if (!tokenMap.has(token)) {
+            tokenMap.set(token, new Set())
+          }
+
+          const entry = tokenMap.get(token)
+          entry.add(state)
+        }
+      }
     }
   }
 
@@ -256,8 +303,15 @@ class Chain {
    * @param {boolean} [opt.backSearch=true] - Should walk back
    * @returns {any[][]} Array with back root and forward steps
    */
-  run ({ tokens = [], backSearch = true } = {}) {
-    const startState = this._genStateFrom(tokens)
+  run ({ tokens = [], backSearch = true, useTokenMap = true } = {}) {
+    let startState = this._genStateFrom(tokens)
+
+    if (startState === this.initialState && tokens.length > 0 && this.tokenMap && useTokenMap) {
+      const validTokens = tokens.filter((t) => this.tokenMap.has(t))
+      const token = validTokens[randInt(validTokens.length)]
+      const possibleStates = [...this.tokenMap.get(token)]
+      startState = possibleStates[randInt(possibleStates.length)]
+    }
 
     let backSteps = []
     const forwardSteps = [...this.walkForward(startState)]
