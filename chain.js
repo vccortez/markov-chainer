@@ -308,9 +308,11 @@ class Chain {
 
     if (startState === this.initialState && tokens.length > 0 && this.tokenMap && useTokenMap) {
       const validTokens = tokens.filter((t) => this.tokenMap.has(t))
-      const token = validTokens[randInt(validTokens.length)]
-      const possibleStates = [...this.tokenMap.get(token)]
-      startState = possibleStates[randInt(possibleStates.length)]
+      if (validTokens.length > 0) {
+        const token = validTokens[randInt(validTokens.length)]
+        const possibleStates = [...this.tokenMap.get(token)]
+        startState = possibleStates[randInt(possibleStates.length)]
+      }
     }
 
     let backSteps = []
