@@ -2,7 +2,6 @@ const util = exports
 
 /**
  * Gets last array element.
- * @private
  */
 util.last = function last (arr) {
   return arr[arr.length - 1]
@@ -10,7 +9,6 @@ util.last = function last (arr) {
 
 /**
  * Port of python's `bisect.bisect` function.
- * @private
  * @see [docs]{https://docs.python.org/3.6/library/bisect.html#bisect.bisect}
  */
 util.bisect = function bisect (a, x, lo = 0, hi = a.length) {
@@ -27,9 +25,8 @@ util.bisect = function bisect (a, x, lo = 0, hi = a.length) {
 
 /**
  * Picks a random index considering their weights.
- *
  * @param {number[]} weights
- * @returns {number} random index
+ * @returns {number} Random index
  */
 util.pick = function pick (weights) {
   const distributionSum = weights.reduce((weightSum, currentWeight) => {
@@ -41,13 +38,24 @@ util.pick = function pick (weights) {
   return randomIndex
 }
 
+/**
+ * Picks a random number between min and max non-inclusive
+ * @param {number} max
+ * @param {number} [min=0]
+ * @returns {number} Random number
+ */
+util.randInt = function randInt (max, min = 0) {
+  min = Math.ceil(min)
+  max = Math.floor(max)
+  return Math.floor(Math.random() * (max - min)) + min
+}
+
 const privatesMap = new WeakMap()
 
 /**
  * Returns an object for an instance.
- *
  * @param {any} instance
- * @returns {object} instance variables
+ * @returns {object} Instance variables
  */
 util.internal = function internal (instance) {
   if (!privatesMap.has(instance)) privatesMap.set(instance, {})
