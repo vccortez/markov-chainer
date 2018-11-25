@@ -5,7 +5,7 @@
 
 const { tuple } = require('immutable-tuple')
 
-const { pick, internal } = require('./util')
+const { pick, randInt, internal } = require('./util')
 
 /**
  * Token to represent the start of runs.
@@ -220,37 +220,58 @@ class Chain {
   }
 
   /**
+   * Generates a state tuple from an array of tokens.
+   *
+   * @private
+   * @param {any[]} [tokens=[]]
+   * @returns {tuple} State tuple
+   */
+  _genStateFrom (tokens = []) {
+    const { stateSize, initialState, model } = this
+    const run = [...tokens]
+    const tuples = []
+    const items = [...initialState, ...run, END]
+
+    for (let i = 0; i < run.length + 1; ++i) {
+      tuples.push(tuple(...items.slice(i, i + stateSize)))
+    }
+
+    const starts = tuples.slice(1)
+      .filter((t) => model.has(t))
+
+    const result = starts[randInt(starts.length)]
+
+    if (!result) {
+      return initialState
+    }
+
+    return result
+  }
+
+  /**
    * Walks the Markov chain and returns all steps.
    *
    * @param {object} [opt] - opt object
-   * @param {any[]} [opt.fromState=[]] - Starting state
+   * @param {any[]} [opt.tokens=[]] - Starting state tokens
    * @param {boolean} [opt.backSearch=true] - Should walk back
    * @returns {any[][]} Array with back root and forward steps
    */
-  run ({ fromState = [], backSearch = true } = {}) {
-    const root = fromState.slice(0, this.stateSize)
-    const startState = [...root]
+  run ({ tokens = [], backSearch = true } = {}) {
+    const startState = this._genStateFrom(tokens)
 
-    while (startState.length < this.stateSize) {
-      startState.unshift(BEGIN)
+    let backSteps = []
+    const forwardSteps = [...this.walkForward(startState)]
+    let hasSteps = forwardSteps.length > 0
+
+    if (backSearch) {
+      backSteps = [...this.walkBackward(startState)].reverse()
+      hasSteps = hasSteps || backSteps.length > 0
     }
-
-    const stepsForward = [...this.walkForward(tuple(...startState))]
-
-    if (!backSearch || root.length < this.stateSize) {
-      return [
-        [],
-        stepsForward.length > 0 ? root : [],
-        stepsForward
-      ]
-    }
-
-    const stepsBack = [...this.walkBackward(tuple(...root))].reverse()
 
     return [
-      stepsBack,
-      stepsForward.length > 0 || stepsBack.length > 0 ? root : [],
-      stepsForward
+      backSteps,
+      hasSteps ? [...startState].filter((t) => t !== BEGIN && t !== END) : [],
+      forwardSteps
     ]
   }
 
