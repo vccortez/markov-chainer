@@ -270,10 +270,11 @@ class Chain {
    * Generates a state tuple from an array of tokens.
    *
    * @private
-   * @param {any[]} [tokens=[]]
+   * @param {any[]} [tokens=[]] - Input tokens
+   * @param {boolean} [useTokenMap=false] - Whether to use token map
    * @returns {tuple} State tuple
    */
-  _genStateFrom (tokens = []) {
+  _genStateFrom (tokens = [], useTokenMap = false) {
     const { stateSize, initialState, model } = this
     const run = [...tokens]
     const tuples = []
@@ -286,13 +287,18 @@ class Chain {
     const starts = tuples.slice(1)
       .filter((t) => model.has(t))
 
-    const result = starts[randInt(starts.length)]
+    let result = starts[randInt(starts.length)]
 
-    if (!result) {
-      return initialState
+    if (!result && useTokenMap && tokens.length > 0 && this.tokenMap) {
+      const choices = tokens.filter((t) => this.tokenMap.has(t))
+      if (choices.length > 0) {
+        const token = choices[randInt(choices.length)]
+        const possibleStates = [...this.tokenMap.get(token)]
+        result = possibleStates[randInt(possibleStates.length)]
+      }
     }
 
-    return result
+    return result || initialState
   }
 
   /**
@@ -305,16 +311,7 @@ class Chain {
    * @returns {any[][]} Array with back root and forward steps
    */
   run ({ tokens = [], backSearch = true, useTokenMap = true } = {}) {
-    let startState = this._genStateFrom(tokens)
-
-    if (startState === this.initialState && tokens.length > 0 && this.tokenMap && useTokenMap) {
-      const validTokens = tokens.filter((t) => this.tokenMap.has(t))
-      if (validTokens.length > 0) {
-        const token = validTokens[randInt(validTokens.length)]
-        const possibleStates = [...this.tokenMap.get(token)]
-        startState = possibleStates[randInt(possibleStates.length)]
-      }
-    }
+    let startState = this._genStateFrom(tokens, useTokenMap)
 
     let backSteps = []
     const forwardSteps = [...this.walkForward(startState)]
