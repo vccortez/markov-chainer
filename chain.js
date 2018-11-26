@@ -309,7 +309,7 @@ class Chain {
    * @returns {any[][]} Array with back root and forward steps
    */
   run ({ tokens = [], backSearch = true, useTokenMap = true } = {}) {
-    let startState = this._genStateFrom(tokens, useTokenMap)
+    const startState = this._genStateFrom(tokens, useTokenMap)
 
     let backSteps = []
     const forwardSteps = [...this.walkForward(startState)]
