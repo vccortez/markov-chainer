@@ -1,5 +1,30 @@
 const util = exports
 
+const privatesMap = new WeakMap()
+
+/**
+ * Returns an unique object for an instance.
+ * @param {any} instance
+ * @returns {object} Instance variables
+ */
+util.internal = function internal (instance) {
+  if (!privatesMap.has(instance)) privatesMap.set(instance, {})
+  return privatesMap.get(instance)
+}
+
+/**
+ * Returns a random array element.
+ * @param {any[]} arr - Array-like input
+ * @param {number[]} [weights] - Weight of elements
+ * @returns {any} A random element
+ */
+util.randomElement = function randomElement (arr, weights) {
+  if (weights && weights.length === arr.length) {
+    return arr[util.weightedPick(weights)]
+  }
+  return arr[util.randomInt(arr.length)]
+}
+
 /**
  * Gets last array element.
  */
@@ -28,14 +53,12 @@ util.bisect = function bisect (a, x, lo = 0, hi = a.length) {
  * @param {number[]} weights
  * @returns {number} Random index
  */
-util.pick = function pick (weights) {
-  const distributionSum = weights.reduce((weightSum, currentWeight) => {
-    const sum = util.last(weightSum) || 0
-    return [...weightSum, (sum + currentWeight)]
+util.weightedPick = function weightedPick (weights) {
+  const distributionSum = weights.reduce((result, weight) => {
+    const sum = util.last(result) || 0
+    return result.concat(sum + weight)
   }, [])
-  const r = Math.random() * util.last(distributionSum)
-  const randomIndex = util.bisect(distributionSum, r)
-  return randomIndex
+  return util.bisect(distributionSum, Math.random() * util.last(distributionSum))
 }
 
 /**
@@ -44,20 +67,8 @@ util.pick = function pick (weights) {
  * @param {number} [min=0]
  * @returns {number} Random number
  */
-util.randInt = function randInt (max, min = 0) {
+util.randomInt = function randomInt (max, min = 0) {
   min = Math.ceil(min)
   max = Math.floor(max)
   return Math.floor(Math.random() * (max - min)) + min
-}
-
-const privatesMap = new WeakMap()
-
-/**
- * Returns an object for an instance.
- * @param {any} instance
- * @returns {object} Instance variables
- */
-util.internal = function internal (instance) {
-  if (!privatesMap.has(instance)) privatesMap.set(instance, {})
-  return privatesMap.get(instance)
 }

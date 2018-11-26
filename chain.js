@@ -5,7 +5,7 @@
 
 const { tuple } = require('immutable-tuple')
 
-const { pick, randInt, internal } = require('./util')
+const { internal, randomElement } = require('./util')
 
 /**
  * Token to represent the start of runs.
@@ -212,9 +212,7 @@ class Chain {
     const choices = [...stateArr[index].keys()]
     const weights = [...stateArr[index].values()]
 
-    const randomIndex = pick(weights)
-
-    return choices[randomIndex]
+    return randomElement(choices, weights)
   }
 
   /**
@@ -287,14 +285,14 @@ class Chain {
     const starts = tuples.slice(1)
       .filter((t) => model.has(t))
 
-    let result = starts[randInt(starts.length)]
+    let result = randomElement(starts)
 
     if (!result && useTokenMap && tokens.length > 0 && this.tokenMap) {
       const choices = tokens.filter((t) => this.tokenMap.has(t))
       if (choices.length > 0) {
-        const token = choices[randInt(choices.length)]
+        const token = randomElement(choices)
         const possibleStates = [...this.tokenMap.get(token)]
-        result = possibleStates[randInt(possibleStates.length)]
+        result = randomElement(possibleStates)
       }
     }
 
