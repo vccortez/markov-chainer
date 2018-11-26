@@ -32,7 +32,7 @@ class Chain {
    * @param {any[][]} corpus - A list of actual runs
    * @param {object} [opt] - opt object
    * @param {number} [opt.stateSize=1] - Size of state nodes
-   * @param {boolean} [opt.useTokenMap=true] - Should it map `token => state` ?
+   * @param {boolean} [opt.useTokenMap=true] - Whether to map token to states
    * @param {Map} [opt.model] - A prebuilt model
    */
   constructor (corpus, { stateSize = 1, useTokenMap = true, model } = {}) {
@@ -138,7 +138,7 @@ class Chain {
    * @param {Map} opt.model - Model to update
    * @param {tuple} opt.initialState - Starting tuple
    * @param {number} opt.stateSize - Size of state nodes
-   * @param {tuple} [opt.tokenMap] - Optional map of `token => state`
+   * @param {Map} [opt.tokenMap] - Map of token to states
    */
   static seed (run, { model, tokenMap, initialState, stateSize } = {}) {
     const items = [...initialState, ...run, END]
@@ -301,6 +301,7 @@ class Chain {
    * @param {object} [opt] - opt object
    * @param {any[]} [opt.tokens=[]] - Starting state tokens
    * @param {boolean} [opt.backSearch=true] - Should walk back
+   * @param {boolean} [opt.useTokenMap=true] - Whether to use token map
    * @returns {any[][]} Array with back root and forward steps
    */
   run ({ tokens = [], backSearch = true, useTokenMap = true } = {}) {
