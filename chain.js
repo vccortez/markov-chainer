@@ -30,7 +30,7 @@ class Chain {
    * Creates an instance of Chain.
    *
    * @param {any[][]} corpus - A list of actual runs
-   * @param {object} [opt] - opt object
+   * @param {object} [opt] - Options object
    * @param {number} [opt.stateSize=1] - Size of state nodes
    * @param {boolean} [opt.useTokenMap=true] - Whether to map token to states
    * @param {Map} [opt.model] - A prebuilt model
@@ -302,14 +302,27 @@ class Chain {
   /**
    * Walks the Markov chain and returns all steps.
    *
-   * @param {object} [opt] - opt object
+   * The returned step array will look like:
+   * ```javascript
+   * [ [backward_steps], [starting_tokens], [forward_steps] ]
+   * ```
+   *
+   * The starting tokens are only returned when forward or backward steps were
+   * actually generated from a subset of the {opt.tokens} parameter.
+   *
+   * @param {object} [opt] - Options object
    * @param {any[]} [opt.tokens=[]] - Starting state tokens
    * @param {boolean} [opt.backSearch=true] - Should walk back
    * @param {boolean} [opt.useTokenMap=true] - Whether to use token map
+   * @param {boolean} [opt.runMissingTokens=true] - Whether to answer when tokens are not in model
    * @returns {any[][]} Array with back root and forward steps
    */
-  run ({ tokens = [], backSearch = true, useTokenMap = true } = {}) {
+  run ({ tokens = [], backSearch = true, useTokenMap = true, runMissingTokens = true } = {}) {
     const startState = this._genStateFrom(tokens, useTokenMap)
+
+    if (!runMissingTokens && tokens.length > 0 && startState === this.initialState) {
+      return [[], [], []]
+    }
 
     let backSteps = []
     const forwardSteps = [...this.walkForward(startState)]
@@ -331,8 +344,9 @@ class Chain {
    * Serialises the chain into a JSONable array.
    *
    * The returned array will look like:
-   *
-   *   [ [ [state], [ [next, count], ...], [ [prev, count], ...] ], ...]
+   * ```javascript
+   * [ [ [state], [ [next, count], ...], [ [prev, count], ...] ], ...]
+   * ```
    *
    * @returns {any[]} JSON array
    * @see https://mdn.io/stringify#toJSON()_behavior
