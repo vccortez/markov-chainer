@@ -4,7 +4,7 @@
   "description": "a simple markov chain library",
   "main": "chain.js",
   "scripts": {
-    "test": "jsdoc chain.js"
+    "jsdoc": "jsdoc -c jsdoc.json"
   },
   "dependencies": {
     "immutable-tuple": "^0.4.9"
