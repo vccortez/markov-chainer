@@ -2,9 +2,9 @@
   "name": "markov-chainer",
   "version": "1.0.0",
   "description": "a simple markov chain library",
-  "main": "chain.js",
+  "main": "./lib/chain.js",
   "scripts": {
-    "jsdoc": "jsdoc -c jsdoc.json"
+    "docs": "jsdoc -c jsdoc.json -d docs"
   },
   "dependencies": {
     "immutable-tuple": "^0.4.9"
