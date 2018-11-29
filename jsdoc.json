@@ -1,6 +1,3 @@
 {
-  "plugins": ["plugins/markdown"],
-  "source": {
-    "include": ["./lib/chain.js"]
-  }
+  "plugins": ["plugins/markdown"]
 }
