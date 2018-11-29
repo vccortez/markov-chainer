@@ -2,7 +2,7 @@
   "name": "markov-chainer",
   "version": "1.0.0",
   "description": "a simple markov chain library",
-  "main": "./lib/chain.js",
+  "main": "./lib/index.js",
   "scripts": {
     "docs": "jsdoc lib -c jsdoc.json -d docs"
   },
