@@ -1,32 +1,69 @@
 # markov-chainer
 
-Yet another simple Markov chain generator for Node
+> Markov chain library for Node.js
 
-## Goal
+A library implementation of stationary [Markov chains](https://en.wikipedia.org/wiki/Markov_chain#Discrete-time_Markov_chain) with optional memory.
+The focus of `markov-chainer` is keeping responses on topic, helping with the creation of chat bots.
 
-The goal of `markov-chainer` is providing a chain implementation that can generate “on topic” states most of the time
+## Installation
 
-This library is currently WIP, I have the intention to publish it on NPM when complete
+The library is available on [npm](https://www.npmjs.com/package/markov-chainer) as `markov-chainer`:
 
-It was made specifically to create chatbots
+```bash
+npm install markov-chainer
+```
 
-## Work in progress
+## Features
 
-When requesting a run from an input state to the chain, the input may be greater than or less than the chain's state size, and in any case an input state does not exist in the chain we can not respond on topic
+Some of the main features:
+- **Seeding**: chain can grow after instantiation
+- **On topic**: chain responses are often on topic
+- **Small API**: only around 6 methods you may learn
+- **JSON states**: accepts any JSONable data type as states
 
-In order to maximise the generation of on topic states, here are some ideas:
+## Usage
 
-- [x] 1. If an input's size is less than the chain's state size, it is possible to left-pad the input with begin tokens until the sizes match
-- [x] 2. If an input's size is greater than the chain's state size, it is possible to generate state tuples with the same state size with the input tokens; then, we can filter the generated tuples for the ones that are states on the chain and select one randomly
-- [x] 3. If the chain's state size is greater than 1, it would be possible to add a map from single tokens to a state on the chain, similar to a chain of order 1; this map would allow us to jump from any given token to a full state, which means we could filter the input tokens for the ones that lead to chain states and select one randomly
-- [ ] 4. Clean up the public API and publish
+To create a new chain you a *corpus*, that is, a collection of *sentences* of your Markov process:
+```javascript
+const corpus = [
+  ['Hello', 'world', 'of', 'Markov', 'chains'],
+  ['These', 'are', 'my', "process'", 'tokens'],
+  ['I', 'can', 'use', 'other', { a: 'types' }]
+]
+```
 
-Idea 3 could be useful if the previous solutions fail to find full state and we want to stay on topic, however the downside would be a more random sentence (starting from a random token of the input) and it would increase the chain's size
+Then, create a `Chain` object using the main constructor:
+```javascript
+const { Chain } = require('markov-chainer')
+// takes an object with settings
+// one of which is called `corpus`
+const chain = new Chain({ corpus })
+```
 
-In any case, it is still possible to not find a starting state, or to get a starting state that does not exist in the chain (if it was a state made by solution 1, or from an already complete input) and we may choose to return an empty answer or start from the beginning state (an off topic sentence), which could be decided with a flag
+Finally, request runs from your chain:
+```javascript
+let res = chain.run()
+// `res` is an array of three arrays,
+// the `back`, `root`, and `forward`
+// steps your chain took
+console.log(res)
+```
 
-## Inspirations
+Possible output:
+```javascript
+[ [], [], [ 'I', 'can', 'be', 'any', 'JSON', 'data' ] ]
+```
 
-- [`markovify`](https://github.com/jsvine/markovify)
-- [`markov-chains`](https://github.com/bdchauvette/markov-chains)
+## API
+
+API documentation can be found at [vekat.github.io/markov-chainer](https://vekat.github.io/markov-chainer/).
+
+## Acknowledgements
+
+- [`markovify`](https://github.com/jsvine/markovify) - Python implementation and main inspiration for this library
+- [`markov-chains`](https://github.com/bdchauvette/markov-chains) - JavaScript library inspired by `markovify` with browser support
 - [`node-markov`](https://github.com/substack/node-markov)
+
+## Licence
+
+The `vekat/markov-chainer` project is licensed under the [MIT](licence) licence.
