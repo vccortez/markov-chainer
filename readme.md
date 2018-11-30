@@ -2,6 +2,8 @@
 
 > Markov chain library for Node.js
 
+[![npm version](https://badge.fury.io/js/markov-chainer.svg)](https://badge.fury.io/js/markov-chainer)
+
 A library implementation of stationary [Markov chains](https://en.wikipedia.org/wiki/Markov_chain#Discrete-time_Markov_chain) with optional memory.
 The focus of `markov-chainer` is keeping responses on topic, helping with the creation of chat bots.
 
