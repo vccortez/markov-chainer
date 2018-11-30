@@ -28,6 +28,7 @@ To create a new chain you a *corpus*, that is, a collection of *sentences* of yo
 const corpus = [
   ['Hello', 'world', 'of', 'Markov', 'chains'],
   ['These', 'are', 'my', "process'", 'tokens'],
+  ['This', 'can', 'be', 'any', 'JSON', 'data'],
   ['I', 'can', 'use', 'other', { a: 'types' }]
 ]
 ```
