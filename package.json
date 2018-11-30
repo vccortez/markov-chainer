@@ -19,5 +19,23 @@
     "jsdoc": "^3.5.5"
   },
   "author": "Vitor Cortez <vitor.a.cortez@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vekat/markov-chainer.git"
+  },
+  "keywords": [
+    "markov",
+    "chain",
+    "chat",
+    "bot"
+  ],
+  "bugs": {
+    "url": "https://github.com/vekat/markov-chainer/issues"
+  },
+  "homepage": "https://github.com/vekat/markov-chainer#readme"
 }
