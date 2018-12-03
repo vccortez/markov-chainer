@@ -17,11 +17,11 @@ npm install markov-chainer
 
 ## Features
 
-Some of the main features:
 - **Seeding**: chain can grow after instantiation
 - **On topic**: chain responses are often on topic
 - **Small API**: only around 6 methods you may learn
 - **JSON states**: accepts any JSONable data type as states
+- **JSON serialisation**: convert/create a chain to/from JSON
 
 ## Usage
 
