@@ -1,6 +1,6 @@
 {
   "name": "markov-chainer",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "markov chain library",
   "main": "./lib/index.js",
   "scripts": {
@@ -24,7 +24,9 @@
     "doc": "docs",
     "lib": "lib"
   },
-  "files": ["lib/"],
+  "files": [
+    "lib/"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vekat/markov-chainer.git"
