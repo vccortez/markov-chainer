@@ -17,11 +17,11 @@ test('chain serialisation', (t) => {
   const original = new Chain(options)
   const serialised = JSON.stringify(original)
 
-  t.ok(typeof serialised === 'string', 'chain should be serialisable by `JSON.strinfigy`')
+  t.ok(typeof serialised === 'string', 'chain should be serialisable by `JSON.stringify`')
 
   const generated = Chain.fromJSON(serialised, options)
 
-  t.equal(generated.order, original.order, 'generated chain should have the same order as original')
-  t.same(generated.tokenMap, original.tokenMap, 'generated chain should have the same token map as original')
+  t.equal(generated.order, original.order, 'generated chain should have the same order as the original')
+  t.same(generated.tokenMap, original.tokenMap, 'generated chain token map should be the same as the original')
   t.same(generated.model, original.model, 'generated chain model should be the same as the original')
 })
