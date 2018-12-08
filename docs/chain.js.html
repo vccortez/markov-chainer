@@ -35,6 +35,13 @@ const { tuple } = require('immutable-tuple')
 const { internal, randomElement } = require('./util')
 
 /**
+ * Token to tag a complex JSON value.
+ * @constant
+ * @type {Symbol}
+ */
+const OBJECT = Symbol('@@OBJECT')
+
+/**
  * Token to represent the start of runs.
  * @constant
  * @type {Symbol}
@@ -132,7 +139,7 @@ class Chain {
       const prev = items[i - 1] || BEGIN
 
       if (!model.has(state)) {
-        model.set(state, [new Map(), new Map()])
+        model.set(state, [weightMap(), weightMap()])
       }
 
       const stateMaps = model.get(state)
@@ -190,10 +197,16 @@ class Chain {
     let state = fromState || this.initialState
 
     while (true) {
-      const step = this._step(state, forward)
+      let step = this._step(state, forward)
 
       if (step === stopToken) {
         break
+      }
+
+      if (isObjectToken(step)) {
+        try {
+          step = JSON.parse(step[1])
+        } catch (_) {}
       }
 
       yield step
@@ -318,19 +331,14 @@ class Chain {
     const serialised = []
 
     for (const [state, [next, prev]] of this.model) {
-      const stateArr = [...state].map((value) => {
-        if (value === BEGIN) return BEGIN.toString()
-        return value
-      })
+      const stateArr = [...state].map(stringifyToken)
 
       const nextArr = [...next].map(([value, count]) => {
-        if (value === END) return [END.toString(), count]
-        return [value, count]
+        return [stringifyToken(value), count]
       })
 
       const prevArr = [...prev].map(([value, count]) => {
-        if (value === BEGIN) return [BEGIN.toString(), count]
-        return [value, count]
+        return [stringifyToken(value), count]
       })
 
       serialised.push([stateArr, [nextArr, prevArr]])
@@ -357,35 +365,32 @@ class Chain {
         if (index === 0) {
           order = curStateSize - 1
         } else if (curStateSize !== order + 1) {
-          throw new Error(
-            'Inconsistent Markov chain order. ' +
-            `Expected ${order} but got ${curStateSize - 1} (${state}).`
-          )
+          throw new Error('Inconsistent Markov chain order. ' +
+            `Expected ${order} but got ${curStateSize - 1} (${state}).`)
         }
 
-        const stateTuple = state.map((value) => {
-          if (value === BEGIN.toString()) return BEGIN
-          return value
-        })
+        const stateTuple = state.map(parseTokenString)
 
-        const nextMap = new Map()
-
-        for (const [jsonKey, count] of nextList) {
-          const next = jsonKey === END.toString() ? END : jsonKey
-          nextMap.set(next, count)
+        const nextMap = weightMap()
+        for (const [key, count] of nextList) {
+          nextMap.set(parseTokenString(key), count)
         }
 
-        const prevMap = new Map()
-
-        for (const [jsonKey, count] of prevList) {
-          const prev = jsonKey === BEGIN.toString() ? BEGIN : jsonKey
-          prevMap.set(prev, count)
+        const prevMap = weightMap()
+        for (const [key, count] of prevList) {
+          prevMap.set(parseTokenString(key), count)
         }
 
         return [tuple(...stateTuple), [nextMap, prevMap]]
       })
 
-    return new Chain({ ...options, model: new Map(states) })
+    const model = stateSpace()
+
+    for (const [state, follow] of states) {
+      model.set(state, follow)
+    }
+
+    return new Chain({ ...options, model })
   }
 }
 
@@ -399,6 +404,46 @@ function getInitialState (order) {
 }
 
 /**
+ * Tests if token is complex object.
+ * @param {any} token
+ * @returns {boolean}
+ */
+function isObjectToken (token) {
+  return tuple.isTuple(token) &amp;&amp; token[0] === OBJECT
+}
+
+const symbolRegex = /^Symbol\((@@BEGIN|@@END)\)$/
+const objectRegex = /^Object\((.*)\)$/
+
+/**
+ * Transforms token type to proper token string.
+ * @param {any} token
+ * @returns {string} String token
+ */
+function stringifyToken (token) {
+  if (token === BEGIN) return BEGIN.toString()
+  if (token === END) return END.toString()
+  if (isObjectToken(token)) return `Object(${token[1]})`
+  if (typeof token === 'string' &amp;&amp; (symbolRegex.test(token) || objectRegex.test(token))) {
+    return `"${token}"`
+  }
+  return token
+}
+
+/**
+ * Transforms token string to proper token type.
+ * @param {string} string
+ * @returns {any} Chain token
+ */
+function parseTokenString (string) {
+  if (string === BEGIN.toString()) return BEGIN
+  if (string === END.toString()) return END
+  let res
+  if ((res = objectRegex.exec(string))) return JSON.parse(res[1])
+  return string
+}
+
+/**
  * Builds a Markov chain model.
  * @param {Array&lt;Array&lt;any>>} corpus Corpus to build the model from
  * @param {object} [options={}] Options object
@@ -407,13 +452,11 @@ function getInitialState (order) {
  * @returns {Map&lt;Tuple&lt;any>,any>} Markov chain model
  */
 function buildModel (corpus, { order, initialState } = {}) {
-  const model = new Map()
+  const model = stateSpace()
 
   if (order &lt; 0) {
-    throw new Error(
-      'Invalid Markov chain order. ' +
-        `Expected \`order >= 0\` but got ${order}.`
-    )
+    throw new Error('Invalid Markov chain order. ' +
+    `Expected \`order >= 0\` but got ${order}.`)
   }
 
   if (!initialState || initialState.length - 1 !== order) {
@@ -448,6 +491,74 @@ function buildTokenMap (model) {
   return tokenMap
 }
 
+/**
+ * Creates a proxy map handler.
+ * @param {Function} keyFn Function to make keys
+ * @returns {object} Proxy handler
+ */
+function mapHandler (keyFn) {
+  return {
+    get (target, propertyKey) {
+      let property = Reflect.get(target, propertyKey)
+      if (typeof property === 'function') {
+        if (['set', 'get', 'has'].includes(propertyKey)) {
+          return this._op.bind(this, target, propertyKey)
+        } else {
+          property = property.bind(target)
+        }
+      }
+      return property
+    },
+    _op (map, method, ...args) {
+      args[0] = this._genKey(args[0])
+      return map[method](...args)
+    },
+    _genKey: keyFn
+  }
+}
+
+/**
+ * Proxy for a state space Map.
+ * @param {Map&lt;Tuple&lt;any>,any>} [map=new Map()] Regular Map
+ * @returns {Proxy}
+ */
+function stateSpace (map = new Map()) {
+  return new Proxy(map, mapHandler(function (key) {
+    if (!tuple.isTuple(key)) {
+      throw new Error('Invalid Markov chain state. ' +
+      `Expected tuple but got ${typeof key} (${key || key.toString()}).`)
+    }
+    return key.map((v) => {
+      if (typeof v === 'object') v = makeObjectToken(v)
+      return v
+    })
+  }))
+}
+
+/**
+ * Proxy for a weight Map.
+ * @param {Map&lt;any,Number>} [map=new Map()] Regular Map
+ * @returns {Proxy}
+ */
+function weightMap (map = new Map()) {
+  return new Proxy(map, mapHandler(function (key) {
+    if (typeof key === 'object') {
+      return makeObjectToken(key)
+    }
+    return key
+  }))
+}
+
+/**
+ * Creates a tuple to represent complex JSON data.
+ * @param {any} data
+ * @returns {Tuple&lt;Symbol,any>} Complex data token
+ */
+function makeObjectToken (data) {
+  const value = typeof data === 'string' ? data : JSON.stringify(data)
+  return tuple(OBJECT, value)
+}
+
 module.exports = Chain
 </code></pre>
         </article>
@@ -459,13 +570,13 @@ module.exports = Chain
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Externals</h3><ul><li><a href="external-tuple.html">tuple</a></li></ul><h3>Classes</h3><ul><li><a href="Chain.html">Chain</a></li></ul><h3>Global</h3><ul><li><a href="global.html#BEGIN">BEGIN</a></li><li><a href="global.html#buildModel">buildModel</a></li><li><a href="global.html#buildTokenMap">buildTokenMap</a></li><li><a href="global.html#END">END</a></li><li><a href="global.html#getInitialState">getInitialState</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Externals</h3><ul><li><a href="external-tuple.html">tuple</a></li></ul><h3>Classes</h3><ul><li><a href="Chain.html">Chain</a></li></ul><h3>Global</h3><ul><li><a href="global.html#BEGIN">BEGIN</a></li><li><a href="global.html#buildModel">buildModel</a></li><li><a href="global.html#buildTokenMap">buildTokenMap</a></li><li><a href="global.html#END">END</a></li><li><a href="global.html#getInitialState">getInitialState</a></li><li><a href="global.html#isObjectToken">isObjectToken</a></li><li><a href="global.html#makeObjectToken">makeObjectToken</a></li><li><a href="global.html#mapHandler">mapHandler</a></li><li><a href="global.html#OBJECT">OBJECT</a></li><li><a href="global.html#parseTokenString">parseTokenString</a></li><li><a href="global.html#stateSpace">stateSpace</a></li><li><a href="global.html#stringifyToken">stringifyToken</a></li><li><a href="global.html#weightMap">weightMap</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Dec 03 2018 12:03:37 GMT-0300 (Brasilia Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Dec 08 2018 13:16:06 GMT-0300 (Brasilia Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
