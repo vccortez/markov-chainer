@@ -23,5 +23,5 @@ test('chain serialisation', (t) => {
 
   t.equal(generated.order, original.order, 'generated chain should have the same order as the original')
   t.same(generated.tokenMap, original.tokenMap, 'generated chain token map should be the same as the original')
-  t.same(generated.model, original.model, 'generated chain model should be the same as the original')
+  t.same(serialised, JSON.stringify(generated), 'generated chain model should be the same as the original')
 })
