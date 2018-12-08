@@ -1,6 +1,7 @@
 {
   "extends": "standard",
   "rules": {
-    "prefer-const": "warn"
+    "prefer-const": "warn",
+    "require-jsdoc": "warn"
   }
 }
