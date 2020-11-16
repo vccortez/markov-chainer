@@ -4,8 +4,8 @@
 
 [![npm version](https://badge.fury.io/js/markov-chainer.svg)](https://badge.fury.io/js/markov-chainer)
 
-A library implementation of stationary [Markov chains](https://en.wikipedia.org/wiki/Markov_chain#Discrete-time_Markov_chain) with optional memory.
-The focus of `markov-chainer` is keeping responses on topic, helping with the creation of chat bots.
+An implementation of stationary [Markov chains](https://en.wikipedia.org/wiki/Markov_chain#Discrete-time_Markov_chain) with optional memory.
+The main goal of `markov-chainer` is supporting the creation of simple chat bots.
 
 ## Installation
 
@@ -17,21 +17,24 @@ npm install markov-chainer
 
 ## Features
 
-- **Seeding**: chain can grow after instantiation
-- **On topic**: chain responses are often on topic
-- **Small API**: only around 6 methods you may learn
-- **JSON states**: accepts any JSONable data type as states
-- **JSON serialisation**: convert/create a chain to/from JSON
+- **Small API**: at most 6 new methods to learn
+- **Seeding**: model can grow after instantiation
+- **On topic**: responses are often related to input
+- **JSON states**: states can be any JSONable data type
+- **Serialisation**: import/export a model from/to JSON
 
 ## Usage
 
-To create a new chain you a *corpus*, that is, a collection of *sentences* of your Markov process:
+To create a new model from scratch, first provide a *corpus*, that is, a collection of example *runs* for your Markov process:
 ```javascript
+/* example of corpus: lines is sample runs
+   elements are valid states of your process */
 const corpus = [
   ['Hello', 'world', 'of', 'Markov', 'chains'],
-  ['These', 'are', 'my', "process'", 'tokens'],
-  ['This', 'can', 'be', 'any', 'JSON', 'data'],
-  ['I', 'can', 'use', 'other', { a: 'types' }]
+  ['Lines', 'are', 'a', 'sample', 'of', 'run'],
+  ['Each', 'value', 'is', 1, 'valid', 'state'],
+  ['This', 'can', 'be', 'any', 'JSON', 'type'],
+  ['It', 'may', 'be', 'even', { a: 'object' }]
 ]
 ```
 
@@ -45,16 +48,26 @@ const chain = new Chain({ corpus })
 
 Finally, request runs from your chain:
 ```javascript
-let res = chain.run()
-// `res` is an array of three arrays,
-// the `back`, `root`, and `forward`
-// steps your chain took
+// `res` contains three lists of states:
+// the `previous`, `initial`, and `next`
+// states taken by the Markov chain run
+const res = chain.run()
 console.log(res)
 ```
 
 Possible output:
 ```javascript
-[ [], [], [ 'I', 'can', 'be', 'any', 'JSON', 'data' ] ]
+[ [], [], [ 'It', 'may', 'be', 'any', 'JSON', 'type' ] ]
+```
+
+Runs can also begin at a given state:
+```javascript
+console.log(chain.run({ tokens: ['sample'] }))
+```
+
+Possible output:
+```javascript
+[ [ 'Lines', 'are', 'a' ], [ 'sample' ], [ 'of', 'Markov', 'chains' ] ]
 ```
 
 ## API
