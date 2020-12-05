@@ -1,6 +1,6 @@
 {
   "name": "markov-chainer",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "markov chain library",
   "main": "./lib/index.js",
   "scripts": {
