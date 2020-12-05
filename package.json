@@ -32,7 +32,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vekat/markov-chainer.git"
+    "url": "git+https://github.com/vccortez/markov-chainer.git"
   },
   "keywords": [
     "markov",
@@ -41,7 +41,7 @@
     "bot"
   ],
   "bugs": {
-    "url": "https://github.com/vekat/markov-chainer/issues"
+    "url": "https://github.com/vccortez/markov-chainer/issues"
   },
-  "homepage": "https://github.com/vekat/markov-chainer#readme"
+  "homepage": "https://github.com/vccortez/markov-chainer#readme"
 }

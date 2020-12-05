@@ -72,7 +72,7 @@ Possible output:
 
 ## API
 
-API documentation can be found at [vekat.github.io/markov-chainer](https://vekat.github.io/markov-chainer/).
+API documentation can be found at [vccortez.github.io/markov-chainer](https://vccortez.github.io/markov-chainer/).
 
 ## Acknowledgements
 
@@ -82,4 +82,4 @@ API documentation can be found at [vekat.github.io/markov-chainer](https://vekat
 
 ## Licence
 
-The `vekat/markov-chainer` project is licensed under the [MIT](licence) licence.
+The `vccortez/markov-chainer` project is licensed under the [MIT](licence) licence.
